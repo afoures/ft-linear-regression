@@ -2,13 +2,10 @@ import math
 import csv
 import sys
 import os
-from train import normalizeElem, denormalizeElem, getData
+from train import getPath, normalizeElem, denormalizeElem, getData
 
-t0 = 0.0
-t1 = 0.0
-
-def	estimatePrice(mileage, mileages, prices):
-	price = t1 * normalizeElem(mileages, mileage) + t0
+def	estimatePrice(thetas, mileage, mileages, prices):
+	price = thetas[1] * normalizeElem(mileages, mileage) + thetas[0]
 	return (denormalizeElem(prices, price))
 	
 def	getMileage():
@@ -31,7 +28,7 @@ def	getMileage():
 	return (mileage)
 
 def	getThetas(thetas):
-	global t0, t1
+	t0, t1 = 0, 0
 	if (os.path.isfile(thetas)):
 		with open(thetas, 'r') as csvfile:
 			file = csv.reader(csvfile, delimiter=',')
@@ -39,14 +36,15 @@ def	getThetas(thetas):
 				t0 = float(row[0])
 				t1 = float(row[1])
 				break
+	return (t0, t1)
 
 def	main():
-	getThetas('thetas.csv')
+	thetas = getThetas(getPath('thetas.csv'))
 	mileage = getMileage()
-	mileages, prices = getData('data.csv')
-	price = math.ceil(estimatePrice(mileage, mileages, prices))
+	mileages, prices = getData(getPath('data.csv'))
+	price = estimatePrice(thetas, mileage, mileages, prices)
 	if price < 0:
-		price = "0 (Don't buy this shit)"
+		price = "{} (Don't buy this shit)".format(price)
 	print('The price for this mileage is: {}'.format(price))
 
 if __name__ == "__main__":

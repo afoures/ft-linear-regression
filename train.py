@@ -1,7 +1,10 @@
-import math
 import csv
+import math
 import matplotlib.pyplot as plt
-from tools import *
+import os
+
+def	getPath(file):
+	return os.path.join(os.path.dirname(__file__), file)
 
 def	getData(file):
 	mileages = []
@@ -44,6 +47,7 @@ def	gradientDescent(mileages, prices, learningRate, iterations):
 	t1History = [0.0]
 	t0 = 0.0
 	t1 = 0.0
+	message = "max epoch reached"
 	
 	for iteration in range(iterations):
 		dt0 = 0
@@ -54,11 +58,17 @@ def	gradientDescent(mileages, prices, learningRate, iterations):
 		t0 -= dt0 / len(mileages) * learningRate
 		t1 -= dt1 / len(prices) * learningRate
 		loss = lossFunction(t0, t1, mileages, prices)
+		if iteration % 10 == 0:
+			print("epoch {} - loss: {:.8}".format(iteration, loss))
 		t0, t1, learningRate = boldDriver(loss, lossHistory, t0, t1, dt0, dt1, learningRate, len(mileages))
 		lossHistory.append(loss)
 		t0History.append(t0)
 		t1History.append(t1)
-	
+		if earlyStopping(lossHistory):
+			message = "early stopped"
+			break
+	print("\nend: {}.".format(message))
+	print("epoch {} - loss: {:.8}".format(iteration, loss))
 	return (t0, t1, lossHistory, t0History, t1History)
 	
 def	lossFunction(t0, t1, mileages, prices):
@@ -77,6 +87,15 @@ def	boldDriver(loss, lossHistory, t0, t1, dt0, dt1, learningRate, length):
 		else:
 			newLearningRate *= 1.05
 	return (t0, t1, newLearningRate)
+
+def	earlyStopping(lossHistory):
+	check = 8
+	if len(lossHistory) > check:
+		mean = sum(lossHistory[-(check):]) / check
+		last = lossHistory[-1]
+		if round(mean, 9) == round(last, 9): 
+			return True
+	return False
 	
 def	storeData(t0, t1, file):
 	with open(file, 'w') as csvfile:
@@ -109,8 +128,8 @@ def	displayPlot(t0, t1, mileages, prices, lossHistory, t0History, t1History):
 	plt.show()
 	
 def	main():
-	learningRate = 0.1
-	iterations = 100
+	learningRate = 0.5
+	iterations = 500
 	
 	mileages, prices = getData(getPath('data.csv'))
 	x, y = normalizeData(mileages, prices)
